@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- <link rel="icon" type="image/svg+xml" href="/vite.svg" /> -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + TS</title>
+  </head>
+  <body>
+    <div id="div"></div>
+    <button onclick="cancelBack()">ctrl+y</button>
+    <button onclick="change()">change</button>
+    <button onclick="deleteProp()">删属性</button>
+    <button onclick="back()">ctrl+z</button>
+    <div id="app"></div>
+    <!-- <script type="module" src="/src/main.ts"></script> -->
+    <script src="/dist/object-undo.umd.cjs"></script>
+    <script>
+      let div = document.getElementById("div")
+      function deleteProp(){
+        delete target.deep
+        write()
+      }
+      function change() {
+        target[0] = parseInt(Math.random() * 100)
+        write()
+      }
+      function write() {
+        div.innerText = JSON.stringify(target, null, 4)
+      }
+      function back() {
+        target._rollback()
+        write()
+      }
+      function cancelBack() {
+        target._cancelRollback()
+        write()
+      }
+      function test(){
+        target.deep.b = 1
+        write()
+        setTimeout(()=>{
+          target._rollback()
+          write()
+        },1000)
+      }
+    </script>
+    <script type="module">
+      import { Revocable, OpInfo } from "/src/main.ts"
+      // console.log(new OpInfo("add","aa"))
+      window.Revocable = Revocable
+      window.target = Revocable({
+          fir: "1",
+          sec: "",
+          deep:{
+              a:1
+          }
+      })
+      write()
+      // let target = undo.Revocable([1, 2, 3])
+
+      // target.xxx = "new"
+      // target.fir = 123
+
+    </script>
+  </body>
+</html>

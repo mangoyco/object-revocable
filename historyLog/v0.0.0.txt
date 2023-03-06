@@ -1,0 +1,84 @@
+import { opType, opTypeContraryMap } from "./type"
+class OpInfo {
+    op: opType
+    propName: string
+    returnOp: opType
+    returnVal?: any
+
+    constructor(op: opType, propName: string, oldVal?: any) {
+        this.op = op
+        this.propName = propName
+        this.returnOp = this.getReturnOp()
+        if (op !== "add") {
+            this.returnVal = oldVal
+        }
+    }
+    getReturnOp(): opType {
+        let map: opTypeContraryMap = {
+            add: "deleteProperty",
+            set: "set",
+            deleteProperty: "set"
+        }
+        return map[this.op]
+    }
+}
+
+function Revocable(target: any) {
+    // Revocable.see = () => { console.log(opStack, stepBackup); }
+    let opStack: Array<OpInfo> = []
+    opStack.push = function (...args: OpInfo[]) {
+        stepBackup = []
+        return Array.prototype.push.call(opStack, ...args)
+    }
+    let stepBackup: Array<OpInfo> = []
+    const rollback = function () {
+        let op = opStack.pop()
+        if (!op) { return }
+        let contraryOp = new OpInfo(op.returnOp, op.propName, target[op.propName])
+        stepBackup.push(contraryOp)
+        Reflect[op.returnOp as opTypeContraryMap[opType]](target, op.propName, op.returnVal)
+    }
+    const cancelRollback = function () {
+        let op = stepBackup.pop()!
+        if (!op) { return }
+        let contraryOp = new OpInfo(op.returnOp, op.propName, target[op.propName])
+        // opStack.push(contraryOp)
+        Array.prototype.push.call(opStack, contraryOp)// 这里在推入ctrlz使用的栈时不清空ctrlY的栈
+        Reflect[op.returnOp as opTypeContraryMap[opType]](target, op.propName, op.returnVal)
+    }
+    let proxy = new Proxy(target, {
+        get(obj, prop) {
+            if (prop === "_rollback") {
+                return rollback
+            }
+            if (prop === "_cancelRollback") {
+                return cancelRollback
+            }
+            return Reflect.get(obj, prop)
+        },
+        set(obj, prop: string, newval) {
+            // console.log(obj, prop, newval,);
+            if (Reflect.has(target, prop)) {
+                let oldVal = Reflect.get(target, prop)
+                Reflect.set(target, prop, newval)
+                opStack.push(new OpInfo("set", prop, oldVal))
+            } else {// 新增属性
+                Reflect.set(obj, prop, newval)
+                opStack.push(new OpInfo("add", prop))
+            }
+            return true
+        },
+        deleteProperty(obj, prop: string) {
+            if (Reflect.has(obj, prop)) {
+                let oldVal = Reflect.get(obj, prop)
+                opStack.push(new OpInfo("deleteProperty", prop, oldVal))
+            }
+            return Reflect.deleteProperty(obj, prop)
+        }
+    })
+    return proxy
+}
+
+export {
+    Revocable
+}

@@ -1,0 +1,116 @@
+/// 未支持深层级
+import { opType, opTypeContraryMap } from "./type"
+import { isObjType } from "./util"
+
+class OpInfo {
+  op: opType
+  propName: string
+  returnOp: opType
+  returnVal?: any
+
+  constructor(op: opType, propName:string , oldVal?: any) {
+    this.op = op
+    this.propName = propName
+    this.returnOp = this.getReturnOp()
+    if (op !== "add") {
+      this.returnVal = oldVal
+    }
+  }
+  getReturnOp(): opType {
+    let map: opTypeContraryMap = {
+      add: "deleteProperty",
+      set: "set",
+      deleteProperty: "add"
+    }
+    return map[this.op]
+  }
+}
+class RevocableHelper {
+  static visitingPath: String[] = []
+  static clearVisitPath(){ this.visitingPath = [] }
+  opStack: Array<OpInfo> = []
+  stepBackup: Array<OpInfo> = []
+  target: any // 数据源
+
+  constructor(target:any){
+    // window.dd = () => { console.log(this.opStack, this.stepBackup)}
+    this.target = target
+    let self = this
+    self.opStack.push = function (...args: OpInfo[]) {
+      self.stepBackup = []
+      return Array.prototype.push.call(this, ...args)
+    }
+  }
+  rollback(){
+    let opInfo = this.opStack.pop()
+    if (!opInfo) { return }
+    let contraryOp = new OpInfo(opInfo.returnOp, opInfo.propName, this.target[opInfo.propName])
+    this.stepBackup.push(contraryOp)
+    let finalOp = opInfo.returnOp === "add" ? "set" : opInfo.returnOp
+    Reflect[finalOp](this.target, opInfo.propName, opInfo.returnVal)
+  }
+  cancelRollback(){
+    let op = this.stepBackup.pop()!
+    if (!op) { return }
+    let contraryOp = new OpInfo(op.returnOp, op.propName, this.target[op.propName])
+    // opStack.push(contraryOp)
+    Array.prototype.push.call(this.opStack, contraryOp)// 这里在推入ctrlz使用的栈时不清空ctrlY的栈
+    let finalOp = op.returnOp === "add" ? "set" : op.returnOp
+    Reflect[finalOp](this.target, op.propName, op.returnVal)
+  }
+  get(obj:any, prop:string):any{
+    if (prop === "_rollback") {
+      return this.rollback.bind(this)
+    }
+    if (prop === "_cancelRollback") {
+      return this.cancelRollback.bind(this)
+    }
+    let value = Reflect.get(obj, prop)
+    return value
+  }
+  set(obj:any, prop: string, newval:any){
+    console.log('set')
+    console.log(RevocableHelper.visitingPath,"in set")
+    let setRes:boolean
+    if (Reflect.has(obj, prop)) {
+      let oldVal = Reflect.get(obj, prop)
+      setRes = Reflect.set(obj, prop, newval)
+      this.opStack.push(new OpInfo("set", prop, oldVal))
+    } else {// 新增属性
+      setRes = Reflect.set(obj, prop, newval)
+      this.opStack.push(new OpInfo("add", prop))
+    }
+    return setRes
+  }
+  deleteProp(obj:any, prop: string){
+    console.log('deleteProp', Reflect.has(obj, prop))
+    // debugger
+    if (Reflect.has(obj, prop)) {
+      let oldVal = Reflect.get(obj, prop)
+      this.opStack.push(new OpInfo("deleteProperty", prop, oldVal))
+    }
+    return Reflect.deleteProperty(obj, prop)
+  }
+}
+(window as any).RevocableHelper = RevocableHelper
+
+function Revocable(target: any){
+  // Revocable.see = () => { console.log(opStack, stepBackup); }
+  let helper = new RevocableHelper(target)
+  let proxy = new Proxy(target, {
+    get(obj, prop:string) {
+      return helper.get(obj, prop)
+    },
+    set(obj, prop:string, newval) {
+      return helper.set(obj, prop, newval)
+    },
+    deleteProperty(obj, prop: string) {
+      return helper.deleteProp(obj, prop)
+    }
+  })
+  return proxy
+}
+
+export {
+  Revocable
+}
