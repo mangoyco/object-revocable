@@ -1,9 +1,10 @@
-var h = Object.defineProperty;
-var u = (s, t, e) => t in s ? h(s, t, { enumerable: !0, configurable: !0, writable: !0, value: e }) : s[t] = e;
-var n = (s, t, e) => (u(s, typeof t != "symbol" ? t + "" : t, e), e);
-function g(s) {
-  return typeof s == "object";
+var u = Object.defineProperty;
+var g = (a, t, e) => t in a ? u(a, t, { enumerable: !0, configurable: !0, writable: !0, value: e }) : a[t] = e;
+var n = (a, t, e) => (g(a, typeof t != "symbol" ? t + "" : t, e), e);
+function P(a) {
+  return typeof a == "object";
 }
+var h = h || {};
 class p {
   constructor(t, e, r) {
     n(this, "op");
@@ -20,14 +21,14 @@ class p {
     }[this.op];
   }
 }
-const i = class {
+const s = class {
   // 数据源
   constructor(t) {
     n(this, "opStack", []);
     n(this, "stepBackup", []);
     n(this, "target");
-    window.dd = () => {
-      window.ss1 = this.opStack, window.ss2 = this.stepBackup, console.log(this.opStack, this.stepBackup);
+    h.dd = () => {
+      h.ss1 = this.opStack, h.ss2 = this.stepBackup, console.log(this.opStack, this.stepBackup);
     }, this.target = t;
     let e = this;
     e.opStack.push = function(...r) {
@@ -35,25 +36,25 @@ const i = class {
     };
   }
   static clearVisitPath() {
-    i.currRootHelperInstance = null, this.visitingPath = [];
+    s.currRootHelperInstance = null, this.visitingPath = [];
   }
   _getRootHelperInstance() {
-    return i.currRootHelperInstance || this;
+    return s.currRootHelperInstance || this;
   }
   _deepGetValue(t) {
     let e = this.target, r = 0;
     for (; r < t.length; )
-      console.log(e[t[r]]), e = e[t[r]], r++;
+      e = e[t[r]], r++;
     return e;
   }
   _getFullPropPath(t) {
-    return i.visitingPath.concat(t);
+    return s.visitingPath.concat(t);
   }
   _backByPath(t) {
-    let e = [...t.propName], r = e.pop(), l = t.returnOp === "add" ? "set" : t.returnOp, a = this._getRootHelperInstance().target, c = 0;
+    let e = [...t.propName], r = e.pop(), l = t.returnOp === "add" ? "set" : t.returnOp, i = this._getRootHelperInstance().target, c = 0;
     for (; c < e.length; )
-      console.log(a[e[c]]), a = a[e[c]], c++;
-    Reflect[l](a, r, t.returnVal);
+      console.log(i[e[c]]), i = i[e[c]], c++;
+    Reflect[l](i, r, t.returnVal);
   }
   // ctrlz的栈，对对象有动作时记录当前动作，同时OpInfo会生成记录相反的操作
   _rememberStep(t) {
@@ -74,42 +75,43 @@ const i = class {
     Array.prototype.push.call(this.opStack, e), this._backByPath(t);
   }
   get(t, e) {
-    if (i.visitingPath.length === 0 && (i.currRootHelperInstance = this), i.visitingPath.push(e), e === "_rollback")
+    if (console.log("get"), e === "_rollback")
       return this.rollback.bind(this);
     if (e === "_cancelRollback")
       return this.cancelRollback.bind(this);
+    s.visitingPath.length === 0 && (s.currRootHelperInstance = this), s.visitingPath.push(e);
     let r = Reflect.get(t, e);
-    return g(r) ? d(r) : (i.clearVisitPath(), r);
+    return P(r) ? d(r) : (s.clearVisitPath(), r);
   }
   set(t, e, r) {
-    console.log("set"), console.log(i.visitingPath, "in set");
-    let l, a;
+    console.log("set"), console.log(s.visitingPath, "in set");
+    let l, i;
     if (Reflect.has(t, e)) {
       let c = Reflect.get(t, e);
-      l = Reflect.set(t, e, r), a = new p("set", this._getFullPropPath(e), c);
+      l = Reflect.set(t, e, r), i = new p("set", this._getFullPropPath(e), c);
     } else
-      l = Reflect.set(t, e, r), a = new p("add", this._getFullPropPath(e));
-    return this._rememberStep(a), l;
+      l = Reflect.set(t, e, r), i = new p("add", this._getFullPropPath(e));
+    return this._rememberStep(i), s.clearVisitPath(), l;
   }
   deleteProp(t, e) {
     if (console.log("deleteProp", Reflect.has(t, e)), Reflect.has(t, e)) {
       let r = Reflect.get(t, e), l = new p("deleteProperty", this._getFullPropPath(e), r);
       this._rememberStep(l);
     }
-    return Reflect.deleteProperty(t, e);
+    return s.clearVisitPath(), Reflect.deleteProperty(t, e);
   }
 };
-let o = i;
+let o = s;
 n(o, "currRootHelperInstance"), n(o, "visitingPath", []);
-window.RevocableHelper = o;
-function d(s) {
-  let t = new o(s);
-  return console.log(t), new Proxy(s, {
+h.RevocableHelper = o;
+function d(a) {
+  let t = new o(a);
+  return console.log(t), new Proxy(a, {
     get(r, l) {
       return t.get(r, l);
     },
-    set(r, l, a) {
-      return t.set(r, l, a);
+    set(r, l, i) {
+      return t.set(r, l, i);
     },
     deleteProperty(r, l) {
       return t.deleteProp(r, l);

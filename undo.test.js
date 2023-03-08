@@ -1,4 +1,4 @@
-const { Revocable } = require("./dist/object-undo.umd.cjs")
+const { Revocable } = require("./dist/object-revocable.umd.cjs")
 
 function Data(){
     return {
@@ -66,4 +66,40 @@ test('深层级删除属性后撤回并反撤回', () => {
     expect(target).toEqual({ deep: { a: 1 } });
     target._cancelRollback()
     expect(target).toEqual({ deep: {  } });
+});
+
+test('深层级混合测试', () => {
+    let t = { deep: { a: 1 } }
+    let target = Revocable(t)
+    target.deep.b = 2
+    target._rollback()
+    expect(target).toEqual({ deep: { a: 1 } });
+    target.deep.a = 12
+    target.deep.b = 2
+    delete target.deep
+    expect(target).toEqual({ });
+    target._rollback()
+    expect(target).toEqual({ deep: { a:12, b:2 } });
+    target._rollback()
+    expect(target).toEqual({ deep: { a: 12 } });
+    target._rollback()
+    expect(target).toEqual({ deep: { a: 1 } });
+    target._cancelRollback()
+    expect(target).toEqual({ deep: { a: 12 } });
+    target._cancelRollback()
+    expect(target).toEqual({ deep: { a: 12, b: 2 } });
+    target._cancelRollback()
+    expect(target).toEqual({});
+});
+
+test('深层级连续delete', () => {
+    let t = { deep: { a: 1,b: 2 } }
+    let target = Revocable(t)
+    delete target.deep.a
+    delete target.deep.b
+    expect(target).toEqual({ deep :{} });
+    target._rollback()
+    expect(target).toEqual({ deep: { b: 2 } });
+    target._rollback()
+    expect(target).toEqual({ deep: { a: 1, b: 2 } });
 });
