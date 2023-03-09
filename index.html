@@ -49,14 +49,36 @@
       import { Revocable, OpInfo } from "/src/main.ts"
       // console.log(new OpInfo("add","aa"))
       window.Revocable = Revocable
-      window.target = Revocable({
-          fir: "1",
-          sec: "",
-          deep:{
-              a:1
-          }
-      })
-      write()
+      // window.target = Revocable({
+      //     fir: "1",
+      //     sec: "",
+      //     deep:{
+      //         a:1
+      //     }
+      // })
+      // write()
+      window.tt = {
+        fir: "1",
+        sec: "",
+        deep: {
+          a: 1
+        }
+      }
+      window.p = Revocable(tt,true)
+      function op(){
+        // p.fir = "fir"
+        // p.sec = "sec"
+        // p.thir = "thir"
+        // p._snapshot()
+        // p.fir = "222"
+        // p._snapshot()
+
+        p.deep.a = 2
+        p.deep.b = 2
+        delete p.deep
+        p._snapshot()
+      }
+      window.op = op
       // let target = undo.Revocable([1, 2, 3])
 
       // target.xxx = "new"

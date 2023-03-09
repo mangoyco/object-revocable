@@ -1,6 +1,7 @@
+// 快照保存模式，该文件包括了调试时的代码
 import { HelperConfig, opType, opTypeContraryMap } from "./type"
 import { isObj, isObjType } from "./util"
-var window: any = window ||{}
+// var window: any = window ||{}
 
 class OpInfo {
   op: opType
@@ -90,21 +91,38 @@ class RevocableHelper {
     this.opStack[len - 1].snapTag = true
   }
   rollbackToSnapshot(checkFirst:boolean = true){
-    let lastOp = this.opStack[this.opStack.length - 1]
-    if (lastOp && lastOp.snapTag){// 如果当前就是一个snapshot，先rollback一次
-      this.rollback()
-      lastOp = this.opStack[this.opStack.length - 1]
-    }
-    while (lastOp && !lastOp.snapTag) {
-      this.rollback()
-      lastOp = this.opStack[this.opStack.length - 1]
-    }
+    // if (checkFirst){// 检查当前是不是已经保存为了快照，如果是，返回到上一个
+    //   let len = this.opStack.length
+    //   let isLastStepSnaped = this.opStack[len - 1].snapTag
+    //   if (isLastStepSnaped) {
+    //     this.rollback()
+    //   }
+    //   this.rollbackToSnapshot(false)
+    // }else{
+      let lastOp = this.opStack[this.opStack.length - 1]
+      if (lastOp && lastOp.snapTag){// 如果当前就是一个snapshot，先rollback一次
+        this.rollback()
+        lastOp = this.opStack[this.opStack.length - 1]
+      }
+      // debugger
+      while (lastOp && !lastOp.snapTag) {
+        this.rollback()
+        lastOp = this.opStack[this.opStack.length - 1]
+      }
+    // }
   }
   cancelRollbackToSnapshot(){
     let lastOp = this.stepBackup[this.stepBackup.length - 1]
-    while (lastOp) {
+    // if (lastOp.snapTag) {// 如果当前就是一个snapshot，先rollback一次
+    //   this.rollback()
+    //   lastOp = this.opStack[this.opStack.length - 1]
+    // }
+    let loop = true
+    console.log(this.stepBackup)
+    debugger
+    while (lastOp && loop) {
+      if (lastOp.snapTag) { loop = false }
       this.cancelRollback()
-      if (lastOp.snapTag) { break; }
       lastOp = this.stepBackup[this.stepBackup.length - 1]
     }
   }

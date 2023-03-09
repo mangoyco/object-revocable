@@ -4,3 +4,7 @@ export type opTypeContraryMap = {
     deleteProperty: "add"
 }
 export type opType = keyof opTypeContraryMap
+
+export interface HelperConfig{
+    snapable: boolean
+}

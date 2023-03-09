@@ -103,3 +103,56 @@ test('深层级连续delete', () => {
     target._rollback()
     expect(target).toEqual({ deep: { a: 1, b: 2 } });
 });
+
+// 快照模式下的测试
+test('快照模式基础测试', () => {
+    let t = {  }
+    let target = Revocable(t,true)
+    target.a = 1
+    target.b = 2
+    target.c = 3
+    target._snapshot()
+    expect(target).toEqual({ a: 1, b: 2, c: 3 });
+    target.d = 4
+    target.e = 5
+    expect(target).toEqual({ a: 1, b: 2, c: 3,d:4,e:5 });
+    target._rollback()
+    expect(target).toEqual({ a: 1, b: 2, c: 3 });
+    target._rollback()
+    expect(target).toEqual({ });
+    target._cancelRollback()
+    expect(target).toEqual({ a: 1, b: 2, c: 3 });
+    target._cancelRollback()
+    expect(target).toEqual({ a: 1, b: 2, c: 3, d: 4, e: 5 });
+});
+
+test('快照模式有子集', () => {
+    let t = {
+        deep:{
+            a:1
+        }
+    }
+    let target = Revocable(t, true)
+    target.deep.a = 2
+    target.deep.b = 3
+    target._snapshot()
+    expect(target).toEqual({
+        deep: {
+            a: 2,
+            b:3
+        }
+    });
+    delete target.deep.a
+    target._rollback()
+    expect(target).toEqual({
+        deep: {
+            a: 2,
+            b: 3
+        }
+    });
+    delete target.deep
+    target._snapshot()
+    target.n = 'new'
+    target._rollback()
+    expect(target).toEqual({});
+});
