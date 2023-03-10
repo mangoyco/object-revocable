@@ -1,3 +1,4 @@
+// 0.0.4清除调试代码的版本，first mileston
 import { HelperConfig, opType, opTypeContraryMap } from "./type"
 import { isObj, isObjType } from "./util"
 
