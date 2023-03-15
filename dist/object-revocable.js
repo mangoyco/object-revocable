@@ -1,20 +1,23 @@
 var o = Object.defineProperty;
-var u = (s, t, e) => t in s ? o(s, t, { enumerable: !0, configurable: !0, writable: !0, value: e }) : s[t] = e;
-var n = (s, t, e) => (u(s, typeof t != "symbol" ? t + "" : t, e), e);
-function g(s) {
-  return Object.prototype.toString.call(s) === "[object Object]";
+var u = (a, t, e) => t in a ? o(a, t, { enumerable: !0, configurable: !0, writable: !0, value: e }) : a[t] = e;
+var n = (a, t, e) => (u(a, typeof t != "symbol" ? t + "" : t, e), e);
+function g(a) {
+  return Object.prototype.toString.call(a) === "[object Object]";
 }
-function k(s) {
-  return typeof s == "object";
+function k(a) {
+  return typeof a == "object";
+}
+function b(a, t) {
+  return Object.hasOwn ? Object.hasOwn(a, t) : Object.prototype.hasOwnProperty.call(a, t);
 }
 class h {
-  constructor(t, e, a, l) {
+  constructor(t, e, s, l) {
     n(this, "op");
     n(this, "propName");
     n(this, "returnOp");
     n(this, "returnVal");
     n(this, "snapTag");
-    this.op = t, this.propName = e, this.returnOp = this.getReturnOp(), this.snapTag = l, t !== "add" && (this.returnVal = a);
+    this.op = t, this.propName = e, this.returnOp = this.getReturnOp(), this.snapTag = l, t !== "add" && (this.returnVal = s);
   }
   getReturnOp() {
     return {
@@ -33,9 +36,9 @@ const i = class {
     // 数据源
     n(this, "snapable");
     this.target = t, this.snapable = e.snapable;
-    let a = this;
-    a.opStack.push = function(...l) {
-      return a.stepBackup = [], Array.prototype.push.call(this, ...l);
+    let s = this;
+    s.opStack.push = function(...l) {
+      return s.stepBackup = [], Array.prototype.push.call(this, ...l);
     };
   }
   static clearVisitPath() {
@@ -45,19 +48,19 @@ const i = class {
     return i.currRootHelperInstance || this;
   }
   _deepGetValue(t) {
-    let e = this.target, a = 0;
-    for (; a < t.length; )
-      e = e[t[a]], a++;
+    let e = this.target, s = 0;
+    for (; s < t.length; )
+      e = e[t[s]], s++;
     return e;
   }
   _getFullPropPath(t) {
     return i.visitingPath.concat(t);
   }
   _backByPath(t) {
-    let e = [...t.propName], a = e.pop(), l = t.returnOp === "add" ? "set" : t.returnOp, r = this._getRootHelperInstance().target, p = 0;
+    let e = [...t.propName], s = e.pop(), l = t.returnOp === "add" ? "set" : t.returnOp, r = this._getRootHelperInstance().target, p = 0;
     for (; p < e.length; )
       r = r[e[p]], p++;
-    Reflect[l](r, a, t.returnVal);
+    Reflect[l](r, s, t.returnVal);
   }
   // ctrlz的栈，对对象有动作时记录当前动作，同时OpInfo会生成记录相反的操作
   _rememberStep(t) {
@@ -111,21 +114,21 @@ const i = class {
     if (e === "_cancelRollback")
       return this.snapable ? this.cancelRollbackToSnapshot.bind(this) : this.cancelRollback.bind(this);
     i.visitingPath.length === 0 && (i.currRootHelperInstance = this), i.visitingPath.push(e);
-    let a = Reflect.get(t, e);
-    return k(a) ? f(a) : (i.clearVisitPath(), a);
+    let s = Reflect.get(t, e);
+    return k(s) ? P(s) : (i.clearVisitPath(), s);
   }
-  set(t, e, a) {
+  set(t, e, s) {
     let l, r;
-    if (Reflect.has(t, e)) {
+    if (b(t, e)) {
       let p = Reflect.get(t, e);
-      l = Reflect.set(t, e, a), r = new h("set", this._getFullPropPath(e), p);
+      l = Reflect.set(t, e, s), r = new h("set", this._getFullPropPath(e), p);
     } else
-      l = Reflect.set(t, e, a), r = new h("add", this._getFullPropPath(e));
+      l = Reflect.set(t, e, s), r = new h("add", this._getFullPropPath(e));
     return this._rememberStep(r), i.clearVisitPath(), l;
   }
   deleteProp(t, e) {
     if (Reflect.has(t, e)) {
-      let a = Reflect.get(t, e), l = new h("deleteProperty", this._getFullPropPath(e), a);
+      let s = Reflect.get(t, e), l = new h("deleteProperty", this._getFullPropPath(e), s);
       this._rememberStep(l);
     }
     return i.clearVisitPath(), Reflect.deleteProperty(t, e);
@@ -133,14 +136,14 @@ const i = class {
 };
 let c = i;
 n(c, "currRootHelperInstance"), n(c, "visitingPath", []);
-function b(s) {
-  return g(s) ? s : {
-    snapable: !!s
+function f(a) {
+  return g(a) ? a : {
+    snapable: !!a
   };
 }
-function f(s, t = !1) {
-  let e = new c(s, b(t));
-  return new Proxy(s, {
+function P(a, t = !1) {
+  let e = new c(a, f(t));
+  return new Proxy(a, {
     get(l, r) {
       return e.get(l, r);
     },
@@ -153,5 +156,5 @@ function f(s, t = !1) {
   });
 }
 export {
-  f as Revocable
+  P as Revocable
 };

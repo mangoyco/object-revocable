@@ -1,5 +1,5 @@
 import { HelperConfig, opType, opTypeContraryMap } from "./type"
-import { isObj, isObjType } from "./util"
+import { isObj, isObjType, hasOwn } from "./util"
 
 class OpInfo {
   op: opType
@@ -150,7 +150,7 @@ class RevocableHelper {
   set(obj: any, prop: string, newval: any) {
     let setRes: boolean
     let opObj: OpInfo
-    if (Reflect.has(obj, prop)) {// 修改属性
+    if (hasOwn(obj, prop)) {// 修改属性
       let oldVal = Reflect.get(obj, prop)
       setRes = Reflect.set(obj, prop, newval)
       opObj = new OpInfo("set", this._getFullPropPath(prop), oldVal)
