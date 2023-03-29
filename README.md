@@ -20,7 +20,7 @@ delete target.fir
 // }
 
 // _rollback 为撤销方法，可理解为ctrl+z⚠️
-// _cancelRollback 为反撤销方法，可理解为ctrl+z ⚠️
+// _cancelRollback 为反撤销方法，可理解为ctrl+y ⚠️
 
 target._rollback()
 // target now is {
@@ -67,7 +67,8 @@ target._cancelRollback()
 const target = Revocable({
     fir: "init value",
     sec: "init value"
-})
+},true)// 或者写为target = Revocable({...},{ snapable: true })
+
 target.fir = "first change"
 target.sec = "first change"
 target.third = "first change"
@@ -76,7 +77,7 @@ target.third = "first change"
 //     sec: "first change",
 //     third: "first change"
 // }
-target._snapshot() ⚠️// 将此时的对象看作一个快照
+target._snapshot() ⚠️// 将此时的对象看作一个快照，即将前面的三次操作视为一次操作
 
 target.fir = "second change"
 target.sec = "second change"
